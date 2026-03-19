@@ -16,9 +16,13 @@
     "@livekit/react-native-expo-plugin": "^1.0.1",
     "@livekit/react-native-webrtc": "^137.0.2",
     "expo": "~53.0.20",
+    "expo-auth-session": "~6.2.1",
     "expo-battery": "~9.1.4",
     "expo-brightness": "~13.1.4",
+    "expo-crypto": "~14.1.5",
+    "expo-secure-store": "~14.2.4",
     "expo-status-bar": "~2.2.3",
+    "expo-web-browser": "~14.2.0",
     "livekit-client": "^2.17.3",
     "react": "^19.0.0",
     "react-native": "0.79.5"

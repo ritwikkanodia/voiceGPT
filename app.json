@@ -3,6 +3,7 @@
     "name": "elevenlabs-conversational-ai-expo-react-native",
     "slug": "elevenlabs-conversational-ai-expo-react-native",
     "version": "1.0.0",
+    "scheme": "voicegpt",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -15,7 +16,14 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "This app needs access to microphone for voice conversations."
+        "NSMicrophoneUsageDescription": "This app needs access to microphone for voice conversations.",
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": [
+              "com.googleusercontent.apps.832782936129-83o63anvsep236nkof1p1mg1ve8um0vj"
+            ]
+          }
+        ]
       },
       "bitcode": false,
       "bundleIdentifier": "com.ritwikkanodia.elevenlabsconversationalaiexporeactnative"
@@ -43,7 +51,9 @@
     },
     "plugins": [
       "@livekit/react-native-expo-plugin",
-      "@config-plugins/react-native-webrtc"
+      "@config-plugins/react-native-webrtc",
+      "expo-web-browser",
+      "expo-secure-store"
     ]
   }
 }
