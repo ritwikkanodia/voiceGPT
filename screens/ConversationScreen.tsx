@@ -192,7 +192,7 @@ export default function ConversationScreen({
           </TouchableOpacity>
         </View>
 
-        {/* Gmail Connect Button */}
+        {/* Gmail Connect Button — hidden for now
         <TouchableOpacity
           style={[
             styles.button,
@@ -207,6 +207,7 @@ export default function ConversationScreen({
             {gmailConnected ? "Gmail Connected" : "Connect Gmail"}
           </Text>
         </TouchableOpacity>
+        */}
 
         <View style={styles.statusContainer}>
           <View
@@ -340,18 +341,18 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F3F4F6",
+    backgroundColor: "#111827",
     padding: 20,
   },
   title: {
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 8,
-    color: "#1F2937",
+    color: "#F9FAFB",
   },
   subtitle: {
     fontSize: 16,
-    color: "#6B7280",
+    color: "#9CA3AF",
     marginBottom: 16,
   },
   statusContainer: {
@@ -368,7 +369,7 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 16,
     fontWeight: "500",
-    color: "#374151",
+    color: "#D1D5DB",
   },
   speakingContainer: {
     flexDirection: "row",
@@ -414,7 +415,7 @@ const styles = StyleSheet.create({
   feedbackLabel: {
     fontSize: 16,
     fontWeight: "500",
-    color: "#374151",
+    color: "#D1D5DB",
     marginBottom: 12,
   },
   feedbackButtons: {
@@ -434,17 +435,18 @@ const styles = StyleSheet.create({
   messagingLabel: {
     fontSize: 16,
     fontWeight: "500",
-    color: "#374151",
+    color: "#D1D5DB",
     marginBottom: 8,
   },
   textInput: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#1F2937",
     borderRadius: 8,
     padding: 16,
     minHeight: 100,
     textAlignVertical: "top",
     borderWidth: 1,
-    borderColor: "#D1D5DB",
+    borderColor: "#374151",
+    color: "#F9FAFB",
     marginBottom: 16,
   },
   messageButtons: {
@@ -468,7 +470,7 @@ const styles = StyleSheet.create({
   },
   userEmail: {
     fontSize: 14,
-    color: "#374151",
+    color: "#D1D5DB",
     fontWeight: "500",
   },
   signOutText: {
