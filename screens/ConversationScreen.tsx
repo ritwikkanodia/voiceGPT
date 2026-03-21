@@ -119,9 +119,7 @@ export default function ConversationScreen({
     }
   }, [gmailResponse]);
 
-  useEffect(() => {
-    startConversation();
-  }, []);
+  // No auto-start — user clicks the button to begin
 
   const handleSubmitText = () => {
     if (textInput.trim()) {
@@ -174,6 +172,7 @@ export default function ConversationScreen({
     return status[0].toUpperCase() + status.slice(1);
   };
 
+  const isConnecting = conversation.status === "connecting";
   const canEnd = conversation.status === "connected";
 
   return (
@@ -252,6 +251,13 @@ export default function ConversationScreen({
               onPress={endConversation}
             >
               <Text style={styles.buttonText}>End Conversation</Text>
+            </TouchableOpacity>
+          ) : isConnecting ? (
+            <TouchableOpacity
+              style={[styles.button, styles.connectingButton]}
+              disabled
+            >
+              <Text style={styles.buttonText}>Connecting...</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
@@ -402,6 +408,9 @@ const styles = StyleSheet.create({
   },
   endButton: {
     backgroundColor: "#EF4444",
+  },
+  connectingButton: {
+    backgroundColor: "#F59E0B",
   },
   buttonText: {
     color: "white",
