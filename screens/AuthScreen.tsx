@@ -45,7 +45,7 @@ export default function AuthScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F3F4F6",
+    backgroundColor: "#111827",
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
@@ -58,12 +58,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: "bold",
-    color: "#1F2937",
+    color: "#F9FAFB",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: "#6B7280",
+    color: "#9CA3AF",
     marginBottom: 48,
     textAlign: "center",
   },

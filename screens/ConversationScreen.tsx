@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  Keyboard,
-  TouchableWithoutFeedback,
   Platform,
-  TextInput,
+  Animated,
+  SafeAreaView,
 } from "react-native";
 import { useConversation } from "@elevenlabs/react-native";
 import type {
@@ -73,8 +72,33 @@ export default function ConversationScreen({
   });
 
   const [isStarting, setIsStarting] = useState(false);
-  const [textInput, setTextInput] = useState("");
   const [gmailConnected, setGmailConnected] = useState(false);
+
+  // Pulse animation for the orb when AI is speaking
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (conversation.isSpeaking) {
+      const pulse = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.15,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      pulse.start();
+      return () => pulse.stop();
+    } else {
+      pulseAnim.setValue(1);
+    }
+  }, [conversation.isSpeaking]);
 
   // Check Gmail connection status on mount
   useEffect(() => {
@@ -119,18 +143,6 @@ export default function ConversationScreen({
     }
   }, [gmailResponse]);
 
-  useEffect(() => {
-    startConversation();
-  }, []);
-
-  const handleSubmitText = () => {
-    if (textInput.trim()) {
-      conversation.sendUserMessage(textInput.trim());
-      setTextInput("");
-      Keyboard.dismiss();
-    }
-  };
-
   const startConversation = async () => {
     if (isStarting) return;
 
@@ -157,333 +169,161 @@ export default function ConversationScreen({
     }
   };
 
-  const getStatusColor = (status: ConversationStatus): string => {
-    switch (status) {
-      case "connected":
-        return "#10B981";
-      case "connecting":
-        return "#F59E0B";
-      case "disconnected":
-        return "#EF4444";
-      default:
-        return "#6B7280";
+  const isConnecting = conversation.status === "connecting";
+  const isConnected = conversation.status === "connected";
+  const isDisconnected = conversation.status === "disconnected";
+
+  const getOrbColor = () => {
+    if (isConnecting) return "#F59E0B";
+    if (isConnected && conversation.isSpeaking) return "#818CF8";
+    if (isConnected) return "#6366F1";
+    return "#374151";
+  };
+
+  const getOrbGlowColor = () => {
+    if (isConnecting) return "rgba(245, 158, 11, 0.3)";
+    if (isConnected && conversation.isSpeaking) return "rgba(129, 140, 248, 0.4)";
+    if (isConnected) return "rgba(99, 102, 241, 0.25)";
+    return "transparent";
+  };
+
+  const getStatusLabel = () => {
+    if (isConnecting) return "Connecting...";
+    if (isConnected && conversation.isSpeaking) return "Speaking";
+    if (isConnected) return "Listening";
+    return "Tap to start";
+  };
+
+  const handleOrbPress = () => {
+    if (isDisconnected && !isStarting) {
+      startConversation();
     }
   };
 
-  const getStatusText = (status: ConversationStatus): string => {
-    return status[0].toUpperCase() + status.slice(1);
-  };
-
-  const canEnd = conversation.status === "connected";
-
   return (
-    <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+    <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <Text style={styles.title}>ElevenLabs React Native Example</Text>
-        <Text style={styles.subtitle}>
-          Remember to set the agentId in the .env file!
-        </Text>
-
-        {/* User Info & Sign Out */}
-        <View style={styles.userRow}>
-          <Text style={styles.userEmail}>{user.email}</Text>
-          <TouchableOpacity onPress={onSignOut}>
+        {/* Top bar */}
+        <View style={styles.topBar}>
+          <Text style={styles.appName}>VoiceGPT</Text>
+          <TouchableOpacity onPress={onSignOut} style={styles.signOutButton}>
             <Text style={styles.signOutText}>Sign Out</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Gmail Connect Button */}
-        <TouchableOpacity
-          style={[
-            styles.button,
-            gmailConnected ? styles.googleSignedInButton : styles.googleButton,
-          ]}
-          onPress={() => {
-            if (!gmailConnected) gmailPromptAsync();
-          }}
-          disabled={!gmailRequest || gmailConnected}
-        >
-          <Text style={styles.buttonText}>
-            {gmailConnected ? "Gmail Connected" : "Connect Gmail"}
-          </Text>
-        </TouchableOpacity>
+        {/* Center area with orb */}
+        <View style={styles.centerArea}>
+          <TouchableOpacity
+            onPress={handleOrbPress}
+            activeOpacity={isDisconnected ? 0.7 : 1}
+            disabled={!isDisconnected || isStarting}
+          >
+            <View style={[styles.orbGlow, { backgroundColor: getOrbGlowColor() }]}>
+              <Animated.View
+                style={[
+                  styles.orb,
+                  {
+                    backgroundColor: getOrbColor(),
+                    transform: [{ scale: pulseAnim }],
+                  },
+                ]}
+              />
+            </View>
+          </TouchableOpacity>
 
-        <View style={styles.statusContainer}>
-          <View
-            style={[
-              styles.statusDot,
-              { backgroundColor: getStatusColor(conversation.status) },
-            ]}
-          />
-          <Text style={styles.statusText}>
-            {getStatusText(conversation.status)}
-          </Text>
+          <Text style={styles.statusLabel}>{getStatusLabel()}</Text>
         </View>
 
-        {/* Speaking Indicator */}
-        {conversation.status === "connected" && (
-          <View style={styles.speakingContainer}>
-            <View
-              style={[
-                styles.speakingDot,
-                {
-                  backgroundColor: conversation.isSpeaking
-                    ? "#8B5CF6"
-                    : "#D1D5DB",
-                },
-              ]}
-            />
-            <Text
-              style={[
-                styles.speakingText,
-                { color: conversation.isSpeaking ? "#8B5CF6" : "#9CA3AF" },
-              ]}
-            >
-              {conversation.isSpeaking ? "AI Speaking" : "AI Listening"}
-            </Text>
-          </View>
-        )}
-
-        <View style={styles.buttonContainer}>
-          {canEnd ? (
+        {/* Bottom bar */}
+        <View style={styles.bottomBar}>
+          {isConnected && (
             <TouchableOpacity
-              style={[styles.button, styles.endButton]}
+              style={styles.endButton}
               onPress={endConversation}
             >
-              <Text style={styles.buttonText}>End Conversation</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={[styles.button, styles.startButton]}
-              onPress={startConversation}
-              disabled={isStarting}
-            >
-              <Text style={styles.buttonText}>
-                {isStarting ? "Starting..." : "Start Conversation"}
-              </Text>
+              <Text style={styles.endButtonIcon}>✕</Text>
             </TouchableOpacity>
           )}
         </View>
-
-        {/* Feedback Buttons */}
-        {conversation.status === "connected" &&
-          conversation.canSendFeedback && (
-            <View style={styles.feedbackContainer}>
-              <Text style={styles.feedbackLabel}>How was that response?</Text>
-              <View style={styles.feedbackButtons}>
-                <TouchableOpacity
-                  style={[styles.button, styles.likeButton]}
-                  onPress={() => conversation.sendFeedback(true)}
-                >
-                  <Text style={styles.buttonText}>Like</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.button, styles.dislikeButton]}
-                  onPress={() => conversation.sendFeedback(false)}
-                >
-                  <Text style={styles.buttonText}>Dislike</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
-
-        {/* Text Input and Messaging */}
-        {conversation.status === "connected" && (
-          <View style={styles.messagingContainer}>
-            <Text style={styles.messagingLabel}>Send Text Message</Text>
-            <TextInput
-              style={styles.textInput}
-              value={textInput}
-              onChangeText={(text) => {
-                setTextInput(text);
-                if (text.length > 0) {
-                  conversation.sendUserActivity();
-                }
-              }}
-              placeholder="Type your message or context... (Press Enter to send)"
-              multiline
-              onSubmitEditing={handleSubmitText}
-              returnKeyType="send"
-              blurOnSubmit={true}
-            />
-            <View style={styles.messageButtons}>
-              <TouchableOpacity
-                style={[styles.button, styles.messageButton]}
-                onPress={handleSubmitText}
-                disabled={!textInput.trim()}
-              >
-                <Text style={styles.buttonText}>Send Message</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.button, styles.contextButton]}
-                onPress={() => {
-                  if (textInput.trim()) {
-                    conversation.sendContextualUpdate(textInput.trim());
-                    setTextInput("");
-                    Keyboard.dismiss();
-                  }
-                }}
-                disabled={!textInput.trim()}
-              >
-                <Text style={styles.buttonText}>Send Context</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
       </View>
-    </TouchableWithoutFeedback>
+    </SafeAreaView>
   );
 }
 
+const ORB_SIZE = 180;
+
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#000000",
+  },
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#F3F4F6",
-    padding: 20,
+    backgroundColor: "#000000",
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 8,
-    color: "#1F2937",
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#6B7280",
-    marginBottom: 16,
-  },
-  statusContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  statusDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: 8,
-  },
-  statusText: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#374151",
-  },
-  speakingContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  speakingDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: 8,
-  },
-  speakingText: {
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  buttonContainer: {
-    width: "100%",
-    gap: 16,
-  },
-  button: {
-    backgroundColor: "#3B82F6",
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  startButton: {
-    backgroundColor: "#10B981",
-  },
-  endButton: {
-    backgroundColor: "#EF4444",
-  },
-  buttonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  feedbackContainer: {
-    marginTop: 24,
-    alignItems: "center",
-  },
-  feedbackLabel: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#374151",
-    marginBottom: 12,
-  },
-  feedbackButtons: {
-    flexDirection: "row",
-    gap: 16,
-  },
-  likeButton: {
-    backgroundColor: "#10B981",
-  },
-  dislikeButton: {
-    backgroundColor: "#EF4444",
-  },
-  messagingContainer: {
-    marginTop: 24,
-    width: "100%",
-  },
-  messagingLabel: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#374151",
-    marginBottom: 8,
-  },
-  textInput: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 8,
-    padding: 16,
-    minHeight: 100,
-    textAlignVertical: "top",
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    marginBottom: 16,
-  },
-  messageButtons: {
-    flexDirection: "row",
-    gap: 16,
-  },
-  messageButton: {
-    backgroundColor: "#3B82F6",
-    flex: 1,
-  },
-  contextButton: {
-    backgroundColor: "#4F46E5",
-    flex: 1,
-  },
-  userRow: {
+  topBar: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    width: "100%",
-    marginBottom: 12,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 12,
   },
-  userEmail: {
-    fontSize: 14,
-    color: "#374151",
-    fontWeight: "500",
+  appName: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#E5E7EB",
+  },
+  signOutButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
   },
   signOutText: {
     fontSize: 14,
+    color: "#6B7280",
+    fontWeight: "500",
+  },
+  centerArea: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  orbGlow: {
+    width: ORB_SIZE + 60,
+    height: ORB_SIZE + 60,
+    borderRadius: (ORB_SIZE + 60) / 2,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  orb: {
+    width: ORB_SIZE,
+    height: ORB_SIZE,
+    borderRadius: ORB_SIZE / 2,
+  },
+  statusLabel: {
+    marginTop: 32,
+    fontSize: 16,
+    color: "#9CA3AF",
+    fontWeight: "500",
+    letterSpacing: 0.5,
+  },
+  bottomBar: {
+    height: 100,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingBottom: 20,
+  },
+  endButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#1F2937",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  endButtonIcon: {
+    fontSize: 20,
     color: "#EF4444",
-    fontWeight: "600",
-  },
-  googleButton: {
-    backgroundColor: "#4285F4",
-    marginBottom: 16,
-    width: "100%",
-  },
-  googleSignedInButton: {
-    backgroundColor: "#10B981",
-    marginBottom: 16,
-    width: "100%",
+    fontWeight: "bold",
   },
 });
