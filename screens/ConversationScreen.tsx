@@ -14,9 +14,7 @@ import type {
   ConversationEvent,
   Role,
 } from "@elevenlabs/react-native";
-import { getBatteryLevel, changeBrightness, flashScreen } from "../utils/tools";
 import * as Google from "expo-auth-session/providers/google";
-import { searchEmails, readEmail, sendEmail } from "../utils/gmailTools";
 import { UserInfo } from "../utils/auth";
 import { apiFetch } from "../utils/api";
 
@@ -31,12 +29,6 @@ export default function ConversationScreen({
 }: ConversationScreenProps) {
   const conversation = useConversation({
     clientTools: {
-      getBatteryLevel,
-      changeBrightness,
-      flashScreen,
-      searchEmails,
-      readEmail,
-      sendEmail,
     },
     onConnect: ({ conversationId }: { conversationId: string }) => {
       console.log("Connected to conversation", conversationId);
