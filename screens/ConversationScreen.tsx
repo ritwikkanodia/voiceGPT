@@ -148,8 +148,14 @@ export default function ConversationScreen({
 
     setIsStarting(true);
     try {
+      const res = await apiFetch("/elevenlabs/conversation-token");
+      const data = await res.json();
+      if (!data.token) {
+        throw new Error("Failed to get conversation token");
+      }
+
       await conversation.startSession({
-        agentId: process.env.EXPO_PUBLIC_AGENT_ID,
+        conversationToken: data.token,
         dynamicVariables: {
           platform: Platform.OS,
         },
