@@ -17,6 +17,11 @@ import type {
 import * as Google from "expo-auth-session/providers/google";
 import { UserInfo } from "../utils/auth";
 import { apiFetch } from "../utils/api";
+import {
+  getGoogleNativeRedirectUri,
+  googleIosClientId,
+  googleWebClientId,
+} from "../utils/googleAuth";
 
 interface ConversationScreenProps {
   user: UserInfo;
@@ -105,16 +110,15 @@ export default function ConversationScreen({
   // Gmail OAuth — authorization code flow with PKCE
   const [gmailRequest, gmailResponse, gmailPromptAsync] =
     Google.useAuthRequest({
-      iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+      iosClientId: googleIosClientId,
+      webClientId: googleWebClientId,
       scopes: [
         "https://www.googleapis.com/auth/gmail.readonly",
         "https://www.googleapis.com/auth/gmail.send",
       ],
       responseType: "code",
       usePKCE: true,
-      redirectUri:
-        "com.googleusercontent.apps.832782936129-83o63anvsep236nkof1p1mg1ve8um0vj:/oauthredirect",
+      redirectUri: getGoogleNativeRedirectUri(),
     });
 
   useEffect(() => {

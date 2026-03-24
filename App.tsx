@@ -1,10 +1,14 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { ElevenLabsProvider } from "@elevenlabs/react-native";
-import * as AuthSession from "expo-auth-session";
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
 import AuthScreen from "./screens/AuthScreen";
 import ConversationScreen from "./screens/ConversationScreen";
+import {
+  getGoogleNativeRedirectUri,
+  googleIosClientId,
+  googleWebClientId,
+} from "./utils/googleAuth";
 import {
   saveAuthSession,
   getAuthSession,
@@ -20,13 +24,11 @@ export default function App() {
 
   // Use the Google provider's auth code + PKCE flow for sign-in.
   // On native, Expo will exchange the one-time code for tokens automatically.
-  const redirectUri = AuthSession.makeRedirectUri({
-    native: `com.googleusercontent.apps.${process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?.split('.apps.googleusercontent.com')[0]}:/oauthredirect`,
-  });
+  const redirectUri = getGoogleNativeRedirectUri();
 
   const [request, authResponse, promptAsync] = Google.useAuthRequest({
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+    iosClientId: googleIosClientId,
+    webClientId: googleWebClientId,
     scopes: ["openid", "profile", "email"],
     responseType: "code",
     usePKCE: true,
