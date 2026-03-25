@@ -14,11 +14,14 @@ import type {
   ConversationEvent,
   Role,
 } from "@elevenlabs/react-native";
-import { getBatteryLevel, changeBrightness, flashScreen } from "../utils/tools";
 import * as Google from "expo-auth-session/providers/google";
-import { searchEmails, readEmail, sendEmail } from "../utils/gmailTools";
 import { UserInfo } from "../utils/auth";
 import { apiFetch } from "../utils/api";
+import {
+  getGoogleNativeRedirectUri,
+  googleIosClientId,
+  googleWebClientId,
+} from "../utils/googleAuth";
 
 interface ConversationScreenProps {
   user: UserInfo;
@@ -31,12 +34,6 @@ export default function ConversationScreen({
 }: ConversationScreenProps) {
   const conversation = useConversation({
     clientTools: {
-      getBatteryLevel,
-      changeBrightness,
-      flashScreen,
-      searchEmails,
-      readEmail,
-      sendEmail,
     },
     onConnect: ({ conversationId }: { conversationId: string }) => {
       console.log("Connected to conversation", conversationId);
@@ -113,16 +110,15 @@ export default function ConversationScreen({
   // Gmail OAuth — authorization code flow with PKCE
   const [gmailRequest, gmailResponse, gmailPromptAsync] =
     Google.useAuthRequest({
-      iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+      iosClientId: googleIosClientId,
+      webClientId: googleWebClientId,
       scopes: [
         "https://www.googleapis.com/auth/gmail.readonly",
         "https://www.googleapis.com/auth/gmail.send",
       ],
       responseType: "code",
       usePKCE: true,
-      redirectUri:
-        "com.googleusercontent.apps.832782936129-83o63anvsep236nkof1p1mg1ve8um0vj:/oauthredirect",
+      redirectUri: getGoogleNativeRedirectUri(),
     });
 
   useEffect(() => {
@@ -148,8 +144,14 @@ export default function ConversationScreen({
 
     setIsStarting(true);
     try {
+      const res = await apiFetch("/elevenlabs/conversation-token");
+      const data = await res.json();
+      if (!data.token) {
+        throw new Error("Failed to get conversation token");
+      }
+
       await conversation.startSession({
-        agentId: process.env.EXPO_PUBLIC_AGENT_ID,
+        conversationToken: data.token,
         dynamicVariables: {
           platform: Platform.OS,
         },
