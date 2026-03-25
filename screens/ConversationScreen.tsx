@@ -14,14 +14,8 @@ import type {
   ConversationEvent,
   Role,
 } from "@elevenlabs/react-native";
-import * as Google from "expo-auth-session/providers/google";
 import { UserInfo } from "../utils/auth";
 import { apiFetch } from "../utils/api";
-import {
-  getGoogleNativeRedirectUri,
-  googleIosClientId,
-  googleWebClientId,
-} from "../utils/googleAuth";
 
 interface ConversationScreenProps {
   user: UserInfo;
@@ -69,7 +63,6 @@ export default function ConversationScreen({
   });
 
   const [isStarting, setIsStarting] = useState(false);
-  const [gmailConnected, setGmailConnected] = useState(false);
 
   // Pulse animation for the orb when AI is speaking
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -96,48 +89,6 @@ export default function ConversationScreen({
       pulseAnim.setValue(1);
     }
   }, [conversation.isSpeaking]);
-
-  // Check Gmail connection status on mount
-  useEffect(() => {
-    apiFetch("/auth/gmail/status")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.connected) setGmailConnected(true);
-      })
-      .catch(() => {});
-  }, [user.email]);
-
-  // Gmail OAuth — authorization code flow with PKCE
-  const [gmailRequest, gmailResponse, gmailPromptAsync] =
-    Google.useAuthRequest({
-      iosClientId: googleIosClientId,
-      webClientId: googleWebClientId,
-      scopes: [
-        "https://www.googleapis.com/auth/gmail.readonly",
-        "https://www.googleapis.com/auth/gmail.send",
-      ],
-      responseType: "code",
-      usePKCE: true,
-      redirectUri: getGoogleNativeRedirectUri(),
-    });
-
-  useEffect(() => {
-    if (gmailResponse?.type === "success" && gmailResponse.params?.code) {
-      const code = gmailResponse.params.code;
-      const codeVerifier = gmailRequest?.codeVerifier;
-      if (!codeVerifier) return;
-
-      apiFetch("/auth/gmail/connect", {
-        method: "POST",
-        body: JSON.stringify({ code, code_verifier: codeVerifier }),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.connected) setGmailConnected(true);
-        })
-        .catch(console.error);
-    }
-  }, [gmailResponse]);
 
   const startConversation = async () => {
     if (isStarting) return;
