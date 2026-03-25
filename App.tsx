@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { Alert } from "react-native";
 import { ElevenLabsProvider } from "@elevenlabs/react-native";
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
@@ -36,6 +37,11 @@ export default function App() {
     redirectUri,
   });
   console.log("[Auth] redirect URI:", request?.redirectUri);
+
+  // TODO: Remove this debug alert after fixing release OAuth
+  useEffect(() => {
+    Alert.alert("Debug OAuth", `iOS: ${googleIosClientId}\nWeb: ${googleWebClientId}\nAPI: ${process.env.EXPO_PUBLIC_API_URL}`);
+  }, []);
 
   // Restore persisted session on launch
   useEffect(() => {
