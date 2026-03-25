@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "elevenlabs-conversational-ai-expo-react-native",
-    "slug": "elevenlabs-conversational-ai-expo-react-native",
+    "slug": "voicegpt",
     "version": "1.0.0",
     "scheme": "voicegpt",
     "orientation": "portrait",
