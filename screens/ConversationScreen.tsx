@@ -35,9 +35,11 @@ export default function ConversationScreen({
     },
     onConnect: ({ conversationId }: { conversationId: string }) => {
       console.log("Connected to conversation", conversationId);
+      setStatus("connected");
     },
     onDisconnect: (details) => {
       console.log("Disconnected from conversation", details);
+      setStatus("disconnected");
     },
     onError: (message: string, context?: Record<string, unknown>) => {
       console.error("Conversation error:", message, context);
@@ -48,8 +50,8 @@ export default function ConversationScreen({
     onModeChange: ({ mode }: { mode: "speaking" | "listening" }) => {
       console.log(`Mode: ${mode}`);
     },
-    onStatusChange: ({ status }: { status: ConversationStatus }) => {
-      console.log(`Status: ${status}`);
+    onStatusChange: ({ status: newStatus }: { status: ConversationStatus }) => {
+      console.log(`Status: ${newStatus}`);
     },
     onCanSendFeedbackChange: ({
       canSendFeedback,
@@ -62,6 +64,7 @@ export default function ConversationScreen({
 
   const [isStarting, setIsStarting] = useState(false);
   const [gmailConnected, setGmailConnected] = useState(false);
+  const [status, setStatus] = useState<ConversationStatus>("disconnected");
 
   // Pulse animation for the orb when AI is speaking
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -148,6 +151,7 @@ export default function ConversationScreen({
       }
 
       console.log("[Conversation] Starting ElevenLabs session");
+      setStatus("connecting");
       await conversation.startSession({
         conversationToken: data.token,
         dynamicVariables: {
@@ -172,9 +176,9 @@ export default function ConversationScreen({
     }
   };
 
-  const isConnecting = conversation.status === "connecting";
-  const isConnected = conversation.status === "connected";
-  const isDisconnected = conversation.status === "disconnected";
+  const isConnecting = status === "connecting";
+  const isConnected = status === "connected";
+  const isDisconnected = status === "disconnected";
 
   const getOrbColor = () => {
     if (isConnecting) return "#F59E0B";

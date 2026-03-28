@@ -38,11 +38,6 @@ export default function App() {
   });
   console.log("[Auth] redirect URI:", request?.redirectUri);
 
-  // TODO: Remove this debug alert after fixing release OAuth
-  useEffect(() => {
-    Alert.alert("Debug OAuth", `iOS: ${googleIosClientId}\nWeb: ${googleWebClientId}\nAPI: ${process.env.EXPO_PUBLIC_API_URL}`);
-  }, []);
-
   // Restore persisted session on launch
   useEffect(() => {
     getAuthSession().then((session) => {
