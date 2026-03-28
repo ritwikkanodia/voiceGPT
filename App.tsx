@@ -38,11 +38,6 @@ export default function App() {
   });
   console.log("[Auth] redirect URI:", request?.redirectUri);
 
-  // TODO: Remove this debug alert after fixing release OAuth
-  useEffect(() => {
-    Alert.alert("Debug OAuth", `iOS: ${googleIosClientId}\nWeb: ${googleWebClientId}\nAPI: ${process.env.EXPO_PUBLIC_API_URL}`);
-  }, []);
-
   // Restore persisted session on launch
   useEffect(() => {
     getAuthSession().then((session) => {
@@ -100,10 +95,22 @@ export default function App() {
     }
   }, [authResponse]);
 
+  const handleSignIn = useCallback(async () => {
+    console.log("[Auth] Sign-in button pressed");
+    try {
+      const result = await promptAsync();
+      console.log("[Auth] promptAsync result:", result?.type);
+    } catch (error) {
+      console.error("[Auth] promptAsync failed:", error);
+    }
+  }, [promptAsync]);
+
   const handleSignOut = useCallback(async () => {
+    console.log("[Auth] Sign-out button pressed");
     if (user) {
       await clearAuthSession(user.email);
     }
+    console.log("[Auth] Sign-out completed");
     setUser(null);
   }, [user]);
 
@@ -112,7 +119,7 @@ export default function App() {
   if (!user) {
     return (
       <AuthScreen
-        onSignIn={() => promptAsync()}
+        onSignIn={handleSignIn}
         isLoading={false}
         disabled={!request}
       />

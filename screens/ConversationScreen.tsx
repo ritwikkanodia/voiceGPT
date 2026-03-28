@@ -11,8 +11,6 @@ import {
 import { useConversation } from "@elevenlabs/react-native";
 import type {
   ConversationStatus,
-  ConversationEvent,
-  Role,
 } from "@elevenlabs/react-native";
 import * as Google from "expo-auth-session/providers/google";
 import { UserInfo } from "../utils/auth";
@@ -37,27 +35,23 @@ export default function ConversationScreen({
     },
     onConnect: ({ conversationId }: { conversationId: string }) => {
       console.log("Connected to conversation", conversationId);
+      setStatus("connected");
     },
-    onDisconnect: (details: string) => {
+    onDisconnect: (details) => {
       console.log("Disconnected from conversation", details);
+      setStatus("disconnected");
     },
     onError: (message: string, context?: Record<string, unknown>) => {
       console.error("Conversation error:", message, context);
     },
-    onMessage: ({
-      message,
-      source,
-    }: {
-      message: ConversationEvent;
-      source: Role;
-    }) => {
+    onMessage: ({ message, source }) => {
       console.log(`Message from ${source}:`, message);
     },
     onModeChange: ({ mode }: { mode: "speaking" | "listening" }) => {
       console.log(`Mode: ${mode}`);
     },
-    onStatusChange: ({ status }: { status: ConversationStatus }) => {
-      console.log(`Status: ${status}`);
+    onStatusChange: ({ status: newStatus }: { status: ConversationStatus }) => {
+      console.log(`Status: ${newStatus}`);
     },
     onCanSendFeedbackChange: ({
       canSendFeedback,
@@ -70,6 +64,7 @@ export default function ConversationScreen({
 
   const [isStarting, setIsStarting] = useState(false);
   const [gmailConnected, setGmailConnected] = useState(false);
+  const [status, setStatus] = useState<ConversationStatus>("disconnected");
 
   // Pulse animation for the orb when AI is speaking
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -143,19 +138,27 @@ export default function ConversationScreen({
     if (isStarting) return;
 
     setIsStarting(true);
+    console.log("[Conversation] Start button pressed");
     try {
+      console.log("[Conversation] Fetching conversation token");
       const res = await apiFetch("/elevenlabs/conversation-token");
       const data = await res.json();
+      console.log("[Conversation] Token response received", {
+        hasToken: Boolean(data.token),
+      });
       if (!data.token) {
         throw new Error("Failed to get conversation token");
       }
 
+      console.log("[Conversation] Starting ElevenLabs session");
+      setStatus("connecting");
       await conversation.startSession({
         conversationToken: data.token,
         dynamicVariables: {
           platform: Platform.OS,
         },
       });
+      console.log("[Conversation] ElevenLabs session started");
     } catch (error) {
       console.error("Failed to start conversation:", error);
     } finally {
@@ -164,16 +167,18 @@ export default function ConversationScreen({
   };
 
   const endConversation = async () => {
+    console.log("[Conversation] End button pressed");
     try {
       await conversation.endSession();
+      console.log("[Conversation] ElevenLabs session ended");
     } catch (error) {
       console.error("Failed to end conversation:", error);
     }
   };
 
-  const isConnecting = conversation.status === "connecting";
-  const isConnected = conversation.status === "connected";
-  const isDisconnected = conversation.status === "disconnected";
+  const isConnecting = status === "connecting";
+  const isConnected = status === "connected";
+  const isDisconnected = status === "disconnected";
 
   const getOrbColor = () => {
     if (isConnecting) return "#F59E0B";
