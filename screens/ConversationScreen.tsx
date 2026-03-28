@@ -49,6 +49,7 @@ export default function ConversationScreen({
     },
     onModeChange: ({ mode }: { mode: "speaking" | "listening" }) => {
       console.log(`Mode: ${mode}`);
+      setIsSpeaking(mode === "speaking");
     },
     onStatusChange: ({ status: newStatus }: { status: ConversationStatus }) => {
       console.log(`Status: ${newStatus}`);
@@ -65,12 +66,13 @@ export default function ConversationScreen({
   const [isStarting, setIsStarting] = useState(false);
   const [gmailConnected, setGmailConnected] = useState(false);
   const [status, setStatus] = useState<ConversationStatus>("disconnected");
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   // Pulse animation for the orb when AI is speaking
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    if (conversation.isSpeaking) {
+    if (isSpeaking) {
       const pulse = Animated.loop(
         Animated.sequence([
           Animated.timing(pulseAnim, {
@@ -90,7 +92,7 @@ export default function ConversationScreen({
     } else {
       pulseAnim.setValue(1);
     }
-  }, [conversation.isSpeaking]);
+  }, [isSpeaking]);
 
   // Check Gmail connection status on mount
   useEffect(() => {
@@ -182,21 +184,21 @@ export default function ConversationScreen({
 
   const getOrbColor = () => {
     if (isConnecting) return "#F59E0B";
-    if (isConnected && conversation.isSpeaking) return "#818CF8";
+    if (isConnected && isSpeaking) return "#818CF8";
     if (isConnected) return "#6366F1";
     return "#374151";
   };
 
   const getOrbGlowColor = () => {
     if (isConnecting) return "rgba(245, 158, 11, 0.3)";
-    if (isConnected && conversation.isSpeaking) return "rgba(129, 140, 248, 0.4)";
+    if (isConnected && isSpeaking) return "rgba(129, 140, 248, 0.4)";
     if (isConnected) return "rgba(99, 102, 241, 0.25)";
     return "transparent";
   };
 
   const getStatusLabel = () => {
     if (isConnecting) return "Connecting...";
-    if (isConnected && conversation.isSpeaking) return "Speaking";
+    if (isConnected && isSpeaking) return "Speaking";
     if (isConnected) return "Listening";
     return "Tap to start";
   };
